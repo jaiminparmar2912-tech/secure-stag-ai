@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Secure Steganography Web Application - Hide and extract secret encrypted messages within images using AES-256-GCM and LSB steganography directly in your browser.">
+  <meta name="keywords" content="steganography, encryption, AES-GCM, LSB, image security, cryptography, client-side steganography">
+  <title>StegoShield - Secure Image Steganography & AES-256 Encryption</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-background">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <div class="app-wrapper">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>StegoShield</h1>
+          <span class="badge">AES-256 &bull; LSB Client-Side</span>
+        </div>
+      </div>
+      <p class="header-tagline">Military-grade AES-256-GCM message encryption paired with zero-loss LSB image steganography. 100% private & client-side.</p>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-nav" aria-label="Main Navigation">
+      <button class="tab-btn active" id="tab-encode-btn" data-target="encode-section">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span>Hide Secret Message</span>
+      </button>
+      <button class="tab-btn" id="tab-decode-btn" data-target="decode-section">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+        </svg>
+        <span>Extract Message</span>
+      </button>
+      <button class="tab-btn" id="tab-guide-btn" data-target="guide-section">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>Guide & Security</span>
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- SECTION 1: ENCODE (HIDE MESSAGE) -->
+      <section id="encode-section" class="panel-section active">
+        <div class="panel-grid">
+          <!-- Left Column: Inputs -->
+          <div class="card form-card">
+            <div class="card-header">
+              <h2>1. Upload Cover Image & Secret Payload</h2>
+              <p class="card-subtext">Choose any high-resolution image to serve as the carrier.</p>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div class="drop-zone" id="encode-dropzone">
+              <input type="file" id="encode-file-input" accept="image/png, image/jpeg, image/webp" class="file-input">
+              <div class="drop-content" id="encode-drop-content">
+                <div class="upload-icon">
+                  <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </div>
+                <p class="drop-title">Drag & drop cover image here</p>
+                <p class="drop-hint">or <span class="highlight">browse files</span> (PNG, JPG, WEBP)</p>
+              </div>
+              <div class="image-preview-container hidden" id="encode-preview-wrapper">
+                <img id="encode-preview-img" alt="Cover Image Preview">
+                <button type="button" class="btn-remove" id="encode-remove-img" title="Change Image">&times;</button>
+                <div class="preview-overlay">
+                  <span id="encode-img-info">0 &times; 0 px</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Capacity Indicator -->
+            <div class="capacity-box" id="capacity-box">
+              <div class="capacity-header">
+                <span>Storage Capacity</span>
+                <span id="capacity-text">0 / 0 KB (0%)</span>
+              </div>
+              <div class="capacity-bar-bg">
+                <div class="capacity-bar-fill" id="capacity-bar" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Secret Message Input -->
+            <div class="form-group">
+              <div class="label-row">
+                <label for="secret-message">Secret Message</label>
+                <span class="char-count" id="secret-char-count">0 chars (0 bytes)</span>
+              </div>
+              <textarea id="secret-message" rows="4" placeholder="Enter confidential notes, passwords, keys, or coordinates..." spellcheck="false"></textarea>
+            </div>
+
+            <!-- Encryption Options -->
+            <div class="encryption-panel">
+              <div class="toggle-group">
+                <div class="toggle-text">
+                  <label for="enable-encryption" class="toggle-label">Encrypt with AES-256-GCM</label>
+                  <p class="toggle-desc">Applies PBKDF2 key derivation and authenticated cipher before embedding.</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="enable-encryption" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group password-group" id="encode-password-wrapper">
+                <label for="encode-password">Encryption Password</label>
+                <div class="password-input-wrap">
+                  <input type="password" id="encode-password" placeholder="Enter a strong passphrase" autocomplete="new-password">
+                  <button type="button" class="btn-toggle-pw" id="encode-toggle-pw" aria-label="Toggle password visibility">
+                    <svg class="eye-open" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <svg class="eye-closed hidden" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="strength-meter" id="encode-strength-meter">
+                  <div class="strength-bar" id="strength-bar"></div>
+                  <span class="strength-text" id="strength-text">Password strength: Empty</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <button type="button" class="btn btn-primary" id="btn-encode">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v10m0 0l-3-3m3 3l3-3"/>
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              <span>Encrypt & Hide in Image</span>
+            </button>
+          </div>
+
+          <!-- Right Column: Result Output -->
+          <div class="card result-card">
+            <div class="card-header">
+              <h2>2. Encoded Stego Image</h2>
+              <p class="card-subtext">The generated image is visually indistinguishable from your original.</p>
+            </div>
+
+            <div class="result-placeholder" id="encode-result-placeholder">
+              <div class="placeholder-icon">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+              <h3>No stego image generated yet</h3>
+              <p>Upload a carrier photo, write your message, and click "Encrypt & Hide" to view and download the result.</p>
+            </div>
+
+            <div class="result-active hidden" id="encode-result-active">
+              <div class="result-image-box">
+                <img id="encode-result-img" alt="Stego Image Output">
+                <div class="success-badge">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>Payload Embedded</span>
+                </div>
+              </div>
+
+              <!-- Metadata Summary Box -->
+              <div class="meta-grid">
+                <div class="meta-item">
+                  <span class="meta-label">Output Format</span>
+                  <span class="meta-val highlight">Lossless PNG</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Payload Size</span>
+                  <span class="meta-val" id="res-meta-size">0 bytes</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Encryption</span>
+                  <span class="meta-val" id="res-meta-enc">AES-GCM-256</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Pixels Modified</span>
+                  <span class="meta-val" id="res-meta-pixels">0%</span>
+                </div>
+              </div>
+
+              <!-- Download & Comparison buttons -->
+              <div class="action-buttons">
+                <a id="btn-download-stego" class="btn btn-accent" download="stego-secure-image.png">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  <span>Download Stego Image (.png)</span>
+                </a>
+              </div>
+
+              <div class="important-notice">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p>Always share the <strong>uncompressed PNG</strong> file. Platforms like WhatsApp, Messenger, or social networks recompress images as JPEG, which erases LSB steganography data.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: DECODE (EXTRACT MESSAGE) -->
+      <section id="decode-section" class="panel-section">
+        <div class="panel-grid">
+          <!-- Left Column: Stego Input -->
+          <div class="card form-card">
+            <div class="card-header">
+              <h2>1. Upload Stego Image</h2>
+              <p class="card-subtext">Upload the PNG image containing the concealed information.</p>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div class="drop-zone" id="decode-dropzone">
+              <input type="file" id="decode-file-input" accept="image/png, image/jpeg, image/webp" class="file-input">
+              <div class="drop-content" id="decode-drop-content">
+                <div class="upload-icon">
+                  <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </div>
+                <p class="drop-title">Drag & drop stego image here</p>
+                <p class="drop-hint">or <span class="highlight">browse file</span> (PNG recommended)</p>
+              </div>
+              <div class="image-preview-container hidden" id="decode-preview-wrapper">
+                <img id="decode-preview-img" alt="Stego Image Preview">
+                <button type="button" class="btn-remove" id="decode-remove-img" title="Change Image">&times;</button>
+                <div class="preview-overlay">
+                  <span id="decode-img-info">0 &times; 0 px</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Decryption Password -->
+            <div class="form-group password-group">
+              <label for="decode-password">Decryption Password</label>
+              <div class="password-input-wrap">
+                <input type="password" id="decode-password" placeholder="Enter password (leave blank if unencrypted)" autocomplete="current-password">
+                <button type="button" class="btn-toggle-pw" id="decode-toggle-pw" aria-label="Toggle password visibility">
+                  <svg class="eye-open" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="eye-closed hidden" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+              <p class="input-hint">The same password used during encryption is required to decrypt the ciphertext.</p>
+            </div>
+
+            <!-- Action Button -->
+            <button type="button" class="btn btn-primary" id="btn-decode">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <line x1="11" y1="8" x2="11" y2="14"/>
+                <line x1="8" y1="11" x2="14" y2="11"/>
+              </svg>
+              <span>Scan & Extract Message</span>
+            </button>
+          </div>
+
+          <!-- Right Column: Extracted Message -->
+          <div class="card result-card">
+            <div class="card-header">
+              <h2>2. Extracted Secret Message</h2>
+              <p class="card-subtext">Verified payload extracted from pixel bitplanes.</p>
+            </div>
+
+            <div class="result-placeholder" id="decode-result-placeholder">
+              <div class="placeholder-icon">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <h3>No message extracted yet</h3>
+              <p>Upload a stego image, provide the password, and click "Scan & Extract" to reveal hidden data.</p>
+            </div>
+
+            <div class="result-active hidden" id="decode-result-active">
+              <div class="extracted-meta-bar">
+                <div class="meta-status-chip" id="decode-status-chip">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <polyline points="9 12 11 14 15 10"/>
+                  </svg>
+                  <span id="decode-chip-text">Authenticated & Decrypted</span>
+                </div>
+                <span class="payload-length" id="decode-payload-length">0 characters</span>
+              </div>
+
+              <div class="message-display-box">
+                <textarea id="extracted-text-area" readonly rows="8" placeholder="Decrypted secret message will appear here..."></textarea>
+                <button type="button" class="btn-copy" id="btn-copy-extracted" title="Copy to clipboard">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+
+              <div class="decode-details-grid">
+                <div class="detail-cell">
+                  <span class="d-label">Cipher Method</span>
+                  <span class="d-val" id="decode-meta-cipher">AES-256-GCM</span>
+                </div>
+                <div class="detail-cell">
+                  <span class="d-label">Key Derivation</span>
+                  <span class="d-val">PBKDF2 (SHA-256, 100k)</span>
+                </div>
+                <div class="detail-cell">
+                  <span class="d-label">Integrity Status</span>
+                  <span class="d-val text-success" id="decode-meta-integrity">Passed (Valid GCM Tag)</span>
+                </div>
+                <div class="detail-cell">
+                  <span class="d-label">Header Signature</span>
+                  <span class="d-val font-mono">0x53544547 (STEG)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: GUIDE & SECURITY -->
+      <section id="guide-section" class="panel-section">
+        <div class="guide-grid">
+          <div class="card guide-card">
+            <div class="guide-badge">Architecture</div>
+            <h2>How Dual-Layer Security Works</h2>
+            <p>StegoShield merges two complementary security disciplines: <strong>Cryptography</strong> and <strong>Steganography</strong>.</p>
+            
+            <div class="flow-steps">
+              <div class="flow-step">
+                <div class="step-num">1</div>
+                <div class="step-desc">
+                  <strong>Password Derivation (PBKDF2)</strong>
+                  <p>Your password is salted with 16 cryptographically secure random bytes and processed through 100,000 rounds of PBKDF2 with HMAC-SHA256.</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <div class="step-num">2</div>
+                <div class="step-desc">
+                  <strong>Authenticated Encryption (AES-GCM-256)</strong>
+                  <p>Your plaintext message is encrypted using AES-GCM with a unique 12-byte initialization vector (IV). An authentication tag guarantees tamper-resistance.</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <div class="step-num">3</div>
+                <div class="step-desc">
+                  <strong>LSB (Least Significant Bit) Embedding</strong>
+                  <p>The resulting binary payload (header + salt + IV + ciphertext) is split into bits and stored into the lowest bit of the Red, Green, and Blue color channels of each pixel.</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <div class="step-num">4</div>
+                <div class="step-desc">
+                  <strong>Zero-Loss Carrier Generation</strong>
+                  <p>The altered pixels differ by at most &plusmn;1 out of 255 values, which is undetectable to the human eye. The output is strictly saved in lossless PNG format.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card guide-card">
+            <div class="guide-badge">Best Practices</div>
+            <h2>Security & Usage Checklist</h2>
+
+            <div class="accordion-item">
+              <h3>Why is PNG strictly required?</h3>
+              <p>Lossy compression formats like <strong>JPEG</strong> optimize file size by discarding high-frequency pixel variations and using Discrete Cosine Transform (DCT) quantization. This permanently destroys the least significant bits. <strong>PNG</strong> is lossless and preserves every bit byte-for-byte.</p>
+            </div>
+
+            <div class="accordion-item">
+              <h3>Is my message ever sent over the internet?</h3>
+              <p>No. <strong>100% of processing occurs in your local browser engine</strong> using HTML5 Canvas and the standard Web Cryptography API (<code>window.crypto.subtle</code>). No servers, external APIs, or data telemetry are ever contacted.</p>
+            </div>
+
+            <div class="accordion-item">
+              <h3>What happens if an incorrect password is entered?</h3>
+              <p>Because AES-GCM is an authenticated cipher mode, attempting decryption with an invalid password triggers an authentication tag mismatch. The system instantly rejects the attempt without exposing corrupted or partial data.</p>
+            </div>
+
+            <div class="accordion-item">
+              <h3>Carrier Capacity Formula</h3>
+              <p>Given an image of width $W$ and height $H$, having 3 color channels (R, G, B):</p>
+              <div class="math-code">
+                Capacity (Bytes) = floor((Width &times; Height &times; 3) / 8)
+              </div>
+              <p class="math-sub">For example, a 1920 &times; 1080 photo can store up to <strong>777.6 Kilobytes</strong> of encrypted text!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Hidden Processing Canvas -->
+    <canvas id="hidden-canvas" style="display:none;"></canvas>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>StegoShield &bull; Secure Client-Side Image Steganography System &bull; Designed with Vanilla HTML, CSS & JavaScript</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# StegoShield - Local Development & Server Requirements
+# Note: StegoShield is a pure client-side web application with zero external npm or python runtime dependencies.
+# The following lightweight tools can optionally be used for local HTTP hosting, testing, or documentation generation.
+
+# Standard HTTP Server (built-in with Python 3.x)
+# Usage: python -m http.server 8085
+
+# Optional development utilities (install via: pip install -r requirements.txt)
+Pillow>=10.0.0          # For programmatic image generation and LSB verification scripts
+cryptography>=41.0.0    # For cross-platform automated test suites
+pytest>=7.4.0           # For running unit and integration test scripts
